@@ -249,7 +249,7 @@ end
 -- ---@class UpdateNoteFields
 -- ---@field id number
 -- ---@field fields table<table<string, string>>
--- ---@param note UpdateNote 
+-- ---@param note UpdateNote
 -- ---@return boolean, table
 -- API.updateNoteFields = function(note)
 --     return API.request2({
@@ -259,4 +259,5 @@ end
 --     })
 -- end
 
+API.deckNames()
 return API

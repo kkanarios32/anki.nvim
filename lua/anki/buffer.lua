@@ -15,22 +15,13 @@ local UTIL = require("anki.utils")
 ---@param latex_support boolean If true insert lines for tex support inside a buffer
 ---@param noteId number | nil If true insert lines for tex support inside a buffer
 ---@return TableAnki
-M.create = function(fields, deckname, modelname, context, latex_support, noteId)
+M.create = function(fields, deckname, modelname, context, noteId)
     local b = {}
 
     local pos = {
         has_seen_first_field = false,
         pos = 1,
     }
-
-    if latex_support then
-        table.insert(b, [[\documentclass[11pt, a4paper]{article}]])
-        table.insert(b, [[\usepackage{amsmath}]])
-        table.insert(b, [[\usepackage{amssymb}]])
-        table.insert(b, [[\begin{document}]])
-        pos.pos = pos.pos + 4
-    end
-
 
     if noteId then
         table.insert(b, "%%NOTEID " .. noteId)
@@ -69,7 +60,7 @@ M.create = function(fields, deckname, modelname, context, latex_support, noteId)
                 for _, k in ipairs(split_by_n) do
                     table.insert(b, k)
                 end
-            elseif t == "table"  then
+            elseif t == "table" then
                 for _, k in ipairs(context.fields[e]) do
                     table.insert(b, k)
                 end
@@ -78,10 +69,6 @@ M.create = function(fields, deckname, modelname, context, latex_support, noteId)
             table.insert(b, "")
         end
         table.insert(b, field)
-    end
-
-    if latex_support then
-        table.insert(b, [[\end{document}]])
     end
 
     return {
@@ -114,7 +101,6 @@ M.parse = function(input)
                 goto continue
             end
 
-
             if line_by_space[1] == "%%MODELNAME" then
                 table.remove(line_by_space, 1)
                 result.modelName = table.concat(line_by_space, " ")
@@ -141,7 +127,11 @@ M.parse = function(input)
                     result.fields[is_inside_field.name].line_number = is_inside_field.line_number
                         - 1
                 else
-                    UTIL.notify_info("Field with name '" .. is_inside_field.name .. "' appears twice. Overwrote the data")
+                    UTIL.notify_info(
+                        "Field with name '"
+                            .. is_inside_field.name
+                            .. "' appears twice. Overwrote the data"
+                    )
                 end
 
                 is_inside_field.is = false

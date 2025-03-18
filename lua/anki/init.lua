@@ -228,7 +228,8 @@ end
 --TODO: make two Types for Configs one for the user has to supply and one for the in-program
 --
 ---@class Config
----@field tex_support boolean Basic support for latex inside the `anki` filetype. See |anki.texSupport|.
+---@field flashcard_dir string Path to directory for flashcards when auto-created.
+---@field filetypes table<string> Table of names of filetypes to enable Anki commands on.
 ---@field models table<string, string> Table of name of notetypes (keys) to name of decks (values). Which notetype should be send to which deck
 ---@field contexts table | nil Table of context names as keys with value of table with `tags` and `fields`. See |anki.context|.
 ---@field move_cursor_after_creation boolean If `true` it will move the cursor the position of the first field
@@ -239,7 +240,8 @@ end
 
 ---@type Config
 local Config = {
-    tex_support = false,
+    flashcard_dir = "./",
+    filetypes = { "anki" },
     models = {},
     contexts = {},
     move_cursor_after_creation = true,
@@ -302,8 +304,7 @@ anki.anki = function(arg)
         error(fields)
     end
 
-    local anki_table =
-        buffer.create(fields, models_to_decknames[arg], arg, nil, Config.tex_support)
+    local anki_table = buffer.create(fields, models_to_decknames[arg], arg, nil)
     vim.api.nvim_buf_set_lines(0, 0, -1, false, anki_table.form)
     vim.bo.modified = false -- don't want to count filling the buffer with the form as modifing it
 
@@ -370,7 +371,7 @@ anki.ankiWithDeck = function(deckname, notetype, context)
         return
     end
 
-    local anki_table = buffer.create(fields, deckname, notetype, cxt, Config.tex_support)
+    local anki_table = buffer.create(fields, deckname, notetype, cxt)
     vim.api.nvim_buf_set_lines(0, 0, -1, false, anki_table.form)
     vim.bo.modified = false -- don't want to count filling the buffer with the form as modifing it
 
@@ -409,8 +410,7 @@ anki.ankiWithContext = function(arg, context)
     end
 
     -- TODO: models_to_decknames[arg] this probably should get checked
-    local anki_table =
-        buffer.create(fields, models_to_decknames[arg], arg, cxt, Config.tex_support)
+    local anki_table = buffer.create(fields, models_to_decknames[arg], arg, cxt)
     vim.api.nvim_buf_set_lines(0, 0, -1, false, anki_table.form)
     vim.bo.modified = false -- don't want to count filling the buffer with the form as modifing it
 
@@ -739,45 +739,40 @@ anki.setup = function(user_cfg)
     user_cfg = user_cfg or {}
     Config = vim.tbl_deep_extend("force", Config, user_cfg)
 
-    if Config.tex_support then
-        vim.filetype.add({
-            extension = {
-                anki = "tex.anki",
-            },
-        })
+    vim.filetype.add({
+        extension = {
+            anki = "anki",
+        },
+    })
+    local extras = require("anki.extras")
+    extras.setup(Config)
 
-        vim.api.nvim_create_autocmd("FileType", {
-            group = AUTOCMD_GROUP,
-            pattern = "tex.anki",
-            callback = function()
-                local status, res = pcall(launch)
-                if not status then
-                    vim.schedule(function()
-                        UTIL.notify_error(vim.inspect(res))
-                    end)
-                end
-            end,
-        })
-    else
-        vim.filetype.add({
-            extension = {
-                anki = "anki",
-            },
-        })
+    -- for _, ft in ipairs(Config.filetypes) do
+    --     vim.api.nvim_create_autocmd("FileType", {
+    --         pattern = "lua",
+    --         callback = function()
+    --             local status, res = pcall(extras.setup(Config))
+    --             if not status then
+    --                 vim.schedule(function()
+    --                     UTIL.notify_error(vim.inspect(res))
+    --                 end)
+    --             end
+    --         end,
+    --     })
+    -- end
 
-        vim.api.nvim_create_autocmd("FileType", {
-            group = AUTOCMD_GROUP,
-            pattern = "anki",
-            callback = function()
-                local status, res = pcall(launch)
-                if not status then
-                    vim.schedule(function()
-                        UTIL.notify_error(vim.inspect(res))
-                    end)
-                end
-            end,
-        })
-    end
+    vim.api.nvim_create_autocmd("FileType", {
+        group = AUTOCMD_GROUP,
+        pattern = "anki",
+        callback = function()
+            local status, res = pcall(launch)
+            if not status then
+                vim.schedule(function()
+                    UTIL.notify_error(vim.inspect(res))
+                end)
+            end
+        end,
+    })
 end
 
 local Target = {
@@ -1017,11 +1012,7 @@ local function open_note(noteId)
     local temp_file = vim.fn.tempname()
     vim.cmd.edit(temp_file)
 
-    if Config.tex_support then
-        vim.bo.filetype = "tex.anki"
-    else
-        vim.bo.filetype = "anki"
-    end
+    vim.bo.filetype = "anki"
 
     local note = BUFFER.parse_form_from_anki(note_from_anki)
     local anki_table = require("anki.buffer").create(
