@@ -744,8 +744,9 @@ anki.setup = function(user_cfg)
             anki = "anki",
         },
     })
-    local extras = require("anki.extras")
-    extras.setup(Config)
+    vim.api.nvim_create_user_command("AnkiWithPicked", function()
+        M.AnkiWithPickedDeck(Config)
+    end, {})
 
     -- for _, ft in ipairs(Config.filetypes) do
     --     vim.api.nvim_create_autocmd("FileType", {

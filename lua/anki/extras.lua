@@ -105,8 +105,12 @@ M.AnkiWithPickedDeck = function(config)
 end
 
 M.setup = function(config)
-    vim.api.nvim_create_user_command("AnkiWithPicked", function()
-        M.AnkiWithPickedDeck(config)
+    vim.api.nvim_create_user_command("AnkiDebug", function()
+        local content =
+            vim.api.nvim_buf_get_lines(vim.api.nvim_get_current_buf(), 0, -1, 0)
+        content = table.concat(content, "\n")
+        local buffer = require("anki.buffer")
+        parsed = buffer.parse(content)
     end, {})
 end
 
