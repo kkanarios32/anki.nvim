@@ -264,8 +264,8 @@ local function get_context(arg)
         else
             error(
                 "Supplied a string '"
-                    .. arg
-                    .. "' to context. But said context is not defined in the config or config is incorrectly defined"
+                .. arg
+                .. "' to context. But said context is not defined in the config or config is incorrectly defined"
             )
         end
     end
@@ -503,8 +503,8 @@ anki.send = function(opts)
             else
                 UTIL.notify_info(
                     "Wrong open_type. "
-                        .. open_type
-                        .. ". Something wrong with your anki addon"
+                    .. open_type
+                    .. ". Something wrong with your anki addon"
                 )
                 return {}
             end
@@ -674,8 +674,8 @@ local function sanity_check()
         if not models[m] then
             error(
                 "Note Type (model) name '"
-                    .. m
-                    .. "' from your config was not found in Anki"
+                .. m
+                .. "' from your config was not found in Anki"
             )
         end
         models_to_decknames[m] = d
@@ -745,7 +745,7 @@ anki.setup = function(user_cfg)
         },
     })
     vim.api.nvim_create_user_command("AnkiWithPicked", function()
-        M.AnkiWithPickedDeck(Config)
+        require("anki.extras").AnkiWithPickedDeck(Config)
     end, {})
 
     -- for _, ft in ipairs(Config.filetypes) do
@@ -1038,7 +1038,7 @@ anki._open_note = function(note_id, card_id, open_type, query)
     card_id = tonumber(card_id)
     assert(card_id)
     vim.g["_anki_update_note"] =
-        { card_id = card_id, open_type = open_type, query = query }
+    { card_id = card_id, open_type = open_type, query = query }
     open_note(note_id)
 end
 
